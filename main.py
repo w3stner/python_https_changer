@@ -27,34 +27,36 @@ def change_link(original_url, hid, type_):
     return new_url
 
 def process(type_):
-    url = url_entry.get()
-    html = get_html(url)
-    hid = extract_hid(html)
-    if hid:
-        new_url = change_link(url, hid, type_)
-        hid_var.set(hid)
-        url_var.set(new_url)
-        copy_hid_btn["state"] = "normal"
-        copy_url_btn["state"] = "normal"
-    else:
-        hid_var.set("Hid не найден")
-        url_var.set("")
-        copy_hid_btn["state"] = "disabled"
-        copy_url_btn["state"] = "disabled"
+    input_text = url_text.get("1.0", tk.END).strip()
+    urls = [line.strip() for line in input_text.splitlines() if line.strip()]
+    results = []
+    for url in urls:
+        html = get_html(url)
+        hid = extract_hid(html)
+        if hid:
+            new_url = change_link(url, hid, type_)
+            results.append(f"URL: {url}\n  hid: {hid}\n  Новая ссылка: {new_url}\n")
+        else:
+            results.append(f"URL: {url}\n  hid не найден\n")
+    result_text.config(state="normal")
+    result_text.delete("1.0", tk.END)
+    result_text.insert(tk.END, "\n".join(results))
+    result_text.config(state="disabled")
 
-def copy_to_clipboard(text):
-    if text:
+def copy_results():
+    result = result_text.get("1.0", tk.END)
+    if result.strip():
         root.clipboard_clear()
-        root.clipboard_append(text)
+        root.clipboard_append(result)
 
 # --- GUI ---
 root = tk.Tk()
-root.title("Reworker")
+root.title("HID Finder (Множественные ссылки)")
 
-# Ввод ссылки
-ttk.Label(root, text="Введите ссылку:").pack(pady=5)
-url_entry = ttk.Entry(root, width=50)
-url_entry.pack(pady=5)
+# Ввод ссылок (многострочное поле)
+ttk.Label(root, text="Вставьте одну или несколько ссылок (по одной на строку):").pack(pady=5)
+url_text = tk.Text(root, width=60, height=8)
+url_text.pack(pady=5)
 
 # Кнопки выбора типа
 button_frame = ttk.Frame(root)
@@ -62,24 +64,11 @@ button_frame.pack(pady=5)
 ttk.Button(button_frame, text="Film", command=lambda: process("film")).pack(side=tk.LEFT, padx=5)
 ttk.Button(button_frame, text="Serial", command=lambda: process("serial")).pack(side=tk.LEFT, padx=5)
 
-# Результат: hid
-hid_frame = ttk.Frame(root)
-hid_frame.pack(pady=5, fill="x")
-ttk.Label(hid_frame, text="Найденный hid:").pack(side=tk.LEFT)
-hid_var = tk.StringVar()
-hid_entry = ttk.Entry(hid_frame, textvariable=hid_var, width=30, state="readonly")
-hid_entry.pack(side=tk.LEFT, padx=5)
-copy_hid_btn = ttk.Button(hid_frame, text="Копировать", command=lambda: copy_to_clipboard(hid_var.get()), state="disabled")
-copy_hid_btn.pack(side=tk.LEFT)
+# Кнопка копирования всех результатов
+ttk.Button(root, text="Копировать все результаты", command=copy_results).pack(pady=5)
 
-# Результат: новая ссылка
-url_frame = ttk.Frame(root)
-url_frame.pack(pady=5, fill="x")
-ttk.Label(url_frame, text="Новая ссылка:").pack(side=tk.LEFT)
-url_var = tk.StringVar()
-url_entry_result = ttk.Entry(url_frame, textvariable=url_var, width=50, state="readonly")
-url_entry_result.pack(side=tk.LEFT, padx=5)
-copy_url_btn = ttk.Button(url_frame, text="Копировать", command=lambda: copy_to_clipboard(url_var.get()), state="disabled")
-copy_url_btn.pack(side=tk.LEFT)
+# Вывод результатов (многострочное поле, только для чтения)
+result_text = tk.Text(root, width=80, height=15, state="disabled")
+result_text.pack(pady=10)
 
 root.mainloop()
