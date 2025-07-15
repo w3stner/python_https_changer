@@ -18,7 +18,7 @@ def extract_hid(html):
     return None
 
 def change_link(original_url, hid, type_):
-    new_url = original_url.replace("https", "mtsvapp")
+    new_url = original_url.replace("https", "mtstvapp")
     last_slash_index = new_url.rfind('ru/')
     if type_ == "film":
         new_url = new_url[:last_slash_index + 3] + "video/movie/" + hid
